@@ -1,5 +1,5 @@
 [package]
-name = "hello-rust"
+name = "tui-tetris"
 version = "0.1.0"
 authors = ["zdravko"]
 edition = "2018"
