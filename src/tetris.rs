@@ -11,6 +11,7 @@ pub struct Tetris {
     pub spare_used: bool,
     pub score: usize,
     pub last_combo: usize,
+    pub tick_time: i128,
 }
 
 impl Tetris {
@@ -59,6 +60,9 @@ impl Tetris {
             self.score +=  cleaned_up * cleaned_up;
             self.last_combo = cleaned_up;
         }
+
+        const QUICKENING_COEF: i128 = 20;
+        self.tick_time -= QUICKENING_COEF * cleaned_up as i128;
 
         return false;
     }

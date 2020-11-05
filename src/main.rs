@@ -27,7 +27,7 @@ const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
 const LEFT_THRESHOLD : usize = 0;
 const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
 const BOTTOM_THRESHOLD : usize = END_SCREEN_Y / BLOCK_HEIGHT;
-const TICK_TIME_MS : i128 = 1000;
+const INITIAL_TICK_TIME_MS : i128 = 1000;
 struct Events {
     receiver: mpsc::Receiver<Key>
 }
@@ -138,6 +138,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         spare_used,
         score: 0,
         last_combo: 0,
+        tick_time: INITIAL_TICK_TIME_MS,
     };
 
     loop {
@@ -236,7 +237,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         })?;
 
         let elapsed = time::SystemTime::now().duration_since(last)?;
-        let timeout = std::cmp::max(0, TICK_TIME_MS - elapsed.as_millis() as i128) as u64;
+        let timeout = std::cmp::max(0, game.tick_time - elapsed.as_millis() as i128) as u64;
 
         match events.receiver.recv_timeout(Duration::from_millis(timeout)) {
             Ok(key) => {
