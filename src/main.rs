@@ -27,7 +27,7 @@ const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
 const LEFT_THRESHOLD : usize = 0;
 const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
 const BOTTOM_THRESHOLD : usize = END_SCREEN_Y / BLOCK_HEIGHT;
-const INITIAL_TICK_TIME_MS : i128 = 1000;
+const INITIAL_TICK_TIME_MS : usize = 1000;
 struct Events {
     receiver: mpsc::Receiver<Key>
 }
@@ -141,6 +141,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         tick_time: INITIAL_TICK_TIME_MS,
     };
 
+    let mut offset_tick: usize = 0;
+    // for when the piece is layed down it's better if we wait for a timeout
+    // instead of just finishing the piece with the tick speed
+    let mut sticky_timeout = INITIAL_TICK_TIME_MS;
     loop {
         let mut projected = game.current_piece.clone();
 
@@ -234,12 +238,32 @@ fn main() -> Result<(), Box<dyn Error>> {
                 height: other[2].height - 3,
                 width: other[2].width - 2,
             });
+
+            let block = Block::default()
+                .title(Span::styled(format!("Tick speed: {}",  game.tick_time),
+                Style::default().add_modifier(Modifier::BOLD)));
+            f.render_widget(block.clone(), tui::layout::Rect {
+                x: other[2].x + 2,
+                y: other[2].y + 4,
+                height: other[2].height - 4,
+                width: other[2].width - 2,
+            });
         })?;
 
         let elapsed = time::SystemTime::now().duration_since(last)?;
-        let timeout = std::cmp::max(0, game.tick_time - elapsed.as_millis() as i128) as u64;
+        let timeout: usize;
 
-        match events.receiver.recv_timeout(Duration::from_millis(timeout)) {
+        if game.tick_time >= (offset_tick + elapsed.as_millis() as usize) {
+            timeout = game.tick_time - (offset_tick + elapsed.as_millis() as usize);
+        } else {
+            timeout = 0;
+        }
+
+        if game.is_over() {
+            break;
+        }
+
+        match events.receiver.recv_timeout(Duration::from_millis(timeout as u64)) {
             Ok(key) => {
                 match key {
                     Key::Char('q') => break,
@@ -248,8 +272,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Key::Down => {
                         if game.can_move_down() {
                             last = time::SystemTime::now();
+                            sticky_timeout = INITIAL_TICK_TIME_MS;
+                            offset_tick = 0;
+                            game.move_down();
                         }
-                        game.move_down();
                     },
                     Key::Char('a') => game.safe_rotate_counter_clockwise(),
                     Key::Char('d') => game.safe_rotate_clockwise(),
@@ -259,8 +285,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             },
             Err(mpsc::RecvTimeoutError::Timeout) => {
-                if game.finishing_move_down() {
-                    break;
+                if game.can_move_down() {
+                    sticky_timeout = INITIAL_TICK_TIME_MS;
+                    offset_tick = 0;
+                    game.move_down();
+                } else {
+                    if sticky_timeout <= game.tick_time {
+                        game.finish_turn();
+                    } else {
+                        sticky_timeout -= game.tick_time;
+
+                        if sticky_timeout < game.tick_time {
+                            offset_tick = game.tick_time - sticky_timeout;
+                        }
+                    }
                 }
                 last = time::SystemTime::now();
             },

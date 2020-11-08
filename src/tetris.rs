@@ -11,7 +11,7 @@ pub struct Tetris {
     pub spare_used: bool,
     pub score: usize,
     pub last_combo: usize,
-    pub tick_time: i128,
+    pub tick_time: usize,
 }
 
 impl Tetris {
@@ -41,7 +41,7 @@ impl Tetris {
     }
 
     // returns whether the game is over after this turn
-    fn finish_turn (&mut self) -> bool {
+    pub fn finish_turn (&mut self) {
         self.pile.extend(self.current_piece.get_positions().iter().cloned());
         let cleaned_up = self.pile.cleanup_full_lines();
 
@@ -49,9 +49,12 @@ impl Tetris {
         self.next_piece.randomize();
 
         self.put_in_starting_position();
+
+        /*
         if self.current_piece.collides((0,0), &self.pile) {
             return true;
         }
+        */
         self.spare_used = false;
         self.score += cleaned_up * super::RIGHT_THRESHOLD;
 
@@ -61,10 +64,17 @@ impl Tetris {
             self.last_combo = cleaned_up;
         }
 
-        const QUICKENING_COEF: i128 = 20;
-        self.tick_time -= QUICKENING_COEF * cleaned_up as i128;
+        const QUICKENING_COEF: usize = 20;
+        let tick_quickening = QUICKENING_COEF * cleaned_up;
 
-        return false;
+        // can't go any faster than 0
+        if self.tick_time >= tick_quickening {
+            self.tick_time -= tick_quickening;
+        }
+    }
+
+    pub fn is_over (&self) -> bool {
+        self.current_piece.collides((0,0), &self.pile)
     }
 
     pub fn move_left(&mut self) {
@@ -85,13 +95,11 @@ impl Tetris {
         }
     }
 
-    // returns whether the game is over
-    pub fn finishing_move_down (&mut self) -> bool {
+    pub fn finishing_move_down (&mut self) {
         if self.current_piece.touches_on_bottom(&self.pile) {
-            return self.finish_turn();
+            self.finish_turn();
         } else {
             self.current_piece.move_down_unsafe();
-            return false
         }
     }
 
