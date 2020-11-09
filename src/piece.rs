@@ -1,5 +1,6 @@
 use crate::matrix::Matrix;
 use crate::pile::Pile;
+use crate::tetris;
 use rand::Rng;
 
 #[derive(Clone)]
@@ -166,8 +167,8 @@ impl Piece {
                 x => x
             } as usize;
 
-            if real_j >= super::RIGHT_THRESHOLD
-                || real_i >= super::BOTTOM_THRESHOLD
+            if real_j >= tetris::RIGHT_THRESHOLD
+                || real_i >= tetris::BOTTOM_THRESHOLD
                 || pile.contains((real_i, real_j)) {
                 return true;
             }

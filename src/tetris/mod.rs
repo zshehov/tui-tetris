@@ -1,6 +1,20 @@
 use crate::pile::Pile;
 use crate::piece::Piece;
 
+use delegate::delegate;
+
+mod time_manager;
+use time_manager::TimeManager;
+
+pub const END_PLAYING_SCREEN_X : usize = 74;
+pub const END_SCREEN_Y : usize = 54;
+
+pub const BLOCK_HEIGHT : usize = 3;
+pub const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
+pub const LEFT_THRESHOLD : usize = 0;
+pub const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
+pub const BOTTOM_THRESHOLD : usize = END_SCREEN_Y / BLOCK_HEIGHT;
+const INITIAL_TICK_TIME_MS : usize = 1000;
 
 pub struct Tetris {
     pub current_piece: Piece,
@@ -11,7 +25,8 @@ pub struct Tetris {
     pub spare_used: bool,
     pub score: usize,
     pub last_combo: usize,
-    pub tick_time: usize,
+    
+    time_manager: TimeManager,
 }
 
 impl Tetris {
@@ -28,7 +43,7 @@ impl Tetris {
 
     fn put_in_starting_position(&mut self) {
         self.current_piece.place_at(
-            (super::LEFT_THRESHOLD + super::RIGHT_THRESHOLD) as i16 / 2 - 2, 0);
+            (LEFT_THRESHOLD + RIGHT_THRESHOLD) as i16 / 2 - 2, 0);
     }
     
     pub fn use_spare (&mut self) {
@@ -40,7 +55,6 @@ impl Tetris {
         }
     }
 
-    // returns whether the game is over after this turn
     pub fn finish_turn (&mut self) {
         self.pile.extend(self.current_piece.get_positions().iter().cloned());
         let cleaned_up = self.pile.cleanup_full_lines();
@@ -50,13 +64,8 @@ impl Tetris {
 
         self.put_in_starting_position();
 
-        /*
-        if self.current_piece.collides((0,0), &self.pile) {
-            return true;
-        }
-        */
         self.spare_used = false;
-        self.score += cleaned_up * super::RIGHT_THRESHOLD;
+        self.score += cleaned_up * RIGHT_THRESHOLD;
 
         if cleaned_up > 1 {
             // for combos
@@ -64,13 +73,8 @@ impl Tetris {
             self.last_combo = cleaned_up;
         }
 
-        const QUICKENING_COEF: usize = 20;
-        let tick_quickening = QUICKENING_COEF * cleaned_up;
-
-        // can't go any faster than 0
-        if self.tick_time >= tick_quickening {
-            self.tick_time -= tick_quickening;
-        }
+        self.time_manager.update_tick_speed(cleaned_up);
+        self.time_manager.tick();
     }
 
     pub fn is_over (&self) -> bool {
@@ -89,8 +93,10 @@ impl Tetris {
         }
     }
 
+    // each move down is interpreted as a tick of the game
     pub fn move_down (&mut self) {
         if !self.current_piece.touches_on_bottom(&self.pile) {
+            self.time_manager.tick();
             self.current_piece.move_down_unsafe();
         }
     }
@@ -143,6 +149,32 @@ impl Tetris {
             temp.move_right_unsafe();
             temp.move_right_unsafe();
             self.current_piece = temp;
+        }
+    }
+
+    pub fn get_tick_speed(&self) -> usize {
+        self.time_manager.tick_time
+    }
+
+    delegate! {
+        to self.time_manager {
+            pub fn get_timeout(&self) -> usize;
+            pub fn should_finish_turn(&self) -> bool;
+            pub fn advance_stuck(&mut self);
+        }
+    }
+
+    pub fn new() -> Self {
+        Tetris {
+            pile: Pile::new(RIGHT_THRESHOLD, BOTTOM_THRESHOLD),
+            current_piece: Piece::new_random_piece_at(
+                           ((LEFT_THRESHOLD + RIGHT_THRESHOLD) / 2 - 2) as i16, 0),
+            next_piece: Piece::new_random_piece_at(0, 1),
+            spare_piece: Piece::new_random_piece_at(0, 7),
+            spare_used: false,
+            score: 0,
+            last_combo: 0,
+            time_manager: TimeManager::new()
         }
     }
 }

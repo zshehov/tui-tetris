@@ -12,22 +12,10 @@ use tui::{
     Terminal,
 };
 
-
 use std::time::Duration;
-
 use std::sync::mpsc;
-use std::collections::HashSet;
 use std::{thread, time};
 
-const END_PLAYING_SCREEN_X : usize = 74;
-const END_SCREEN_Y : usize = 54;
-
-const BLOCK_HEIGHT : usize = 3;
-const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
-const LEFT_THRESHOLD : usize = 0;
-const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
-const BOTTOM_THRESHOLD : usize = END_SCREEN_Y / BLOCK_HEIGHT;
-const INITIAL_TICK_TIME_MS : usize = 1000;
 struct Events {
     receiver: mpsc::Receiver<Key>
 }
@@ -56,8 +44,6 @@ pub mod piece;
 pub mod pile;
 pub mod tetris;
 
-use pile::Pile;
-use matrix::Matrix;
 use piece::Piece;
 use tetris::Tetris;
 
@@ -78,9 +64,9 @@ fn render_playing_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
                 <termion::raw::RawTerminal<std::io::Stdout>>>>) {
     piece.get_positions().iter().map(|(i, j)| {
         tui::layout::Rect{
-            x: (*j * BLOCK_WIDTH) as u16,
-            y: (*i * BLOCK_HEIGHT) as u16,
-            width: BLOCK_WIDTH as u16, height: BLOCK_HEIGHT as u16}
+            x: (*j * tetris::BLOCK_WIDTH) as u16,
+            y: (*i * tetris::BLOCK_HEIGHT) as u16,
+            width: tetris::BLOCK_WIDTH as u16, height: tetris::BLOCK_HEIGHT as u16}
     }).for_each(|rect| {
         frame.render_widget(block.clone()
              .style(Style::default()
@@ -94,7 +80,7 @@ fn render_utility_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
                 <termion::raw::RawTerminal<std::io::Stdout>>>>) {
     piece.get_positions().iter().map(|(i, j)| {
         tui::layout::Rect{
-            x: END_PLAYING_SCREEN_X as u16+ 2 + (*j * 6) as u16,
+            x: tetris::END_PLAYING_SCREEN_X as u16+ 2 + (*j * 6) as u16,
             y: (*i * 3) as u16,
             width: 6 as u16, height: 3 as u16}
     }).for_each(|rect| {
@@ -108,43 +94,14 @@ fn render_utility_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
 fn main() -> Result<(), Box<dyn Error>> {
 
     let stdout = io::stdout().into_raw_mode()?;
-    //let stdout = MouseTerminal::from(stdout);
     let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
     let events = Events::new();
-    let mut last = time::SystemTime::now();
 
-    let pile: Pile =
-        Pile {field: Matrix {col_count: RIGHT_THRESHOLD,
-                             backing: vec![false; RIGHT_THRESHOLD * BOTTOM_THRESHOLD]},
-                             set: HashSet::new()};
+    let mut game = Tetris::new();
 
-    let current_piece = Piece::new_random_piece_at(
-        ((LEFT_THRESHOLD + RIGHT_THRESHOLD) / 2 - 2) as i16, 0);
-
-    // utility pieces
-    let next_piece = Piece::new_random_piece_at(0, 1);
-    let spare_piece = Piece::new_random_piece_at(0, 7);
-
-    let spare_used = false;
-
-    let mut game = Tetris {
-        pile,
-        current_piece,
-        next_piece,
-        spare_piece,
-        spare_used,
-        score: 0,
-        last_combo: 0,
-        tick_time: INITIAL_TICK_TIME_MS,
-    };
-
-    let mut offset_tick: usize = 0;
-    // for when the piece is layed down it's better if we wait for a timeout
-    // instead of just finishing the piece with the tick speed
-    let mut sticky_timeout = INITIAL_TICK_TIME_MS;
     loop {
         let mut projected = game.current_piece.clone();
 
@@ -156,7 +113,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         terminal.draw(|f| {
             let screen = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Length((RIGHT_THRESHOLD * BLOCK_WIDTH) as u16),
+                .constraints([Constraint::Length(
+                        (tetris::RIGHT_THRESHOLD * tetris::BLOCK_WIDTH) as u16),
                               Constraint::Length(30),
                               Constraint::Min(0)].as_ref())
                 .split(f.size());
@@ -211,9 +169,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     color = Color::DarkGray;
                 }
                 (tui::layout::Rect{
-                    x: *j as u16 * BLOCK_WIDTH as u16,
-                    y: *i as u16 * BLOCK_HEIGHT as u16,
-                    width: BLOCK_WIDTH as u16, height: BLOCK_HEIGHT as u16},
+                    x: *j as u16 * tetris::BLOCK_WIDTH as u16,
+                    y: *i as u16 * tetris::BLOCK_HEIGHT as u16,
+                    width: tetris::BLOCK_WIDTH as u16, height: tetris::BLOCK_HEIGHT as u16},
                     color)
             }).for_each(|(rect, color)| {
                 f.render_widget(block.clone().style(Style::default().bg(color)), rect);
@@ -240,7 +198,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             });
 
             let block = Block::default()
-                .title(Span::styled(format!("Tick speed: {}",  game.tick_time),
+                .title(Span::styled(format!("Tick speed: {}",  game.get_tick_speed()),
                 Style::default().add_modifier(Modifier::BOLD)));
             f.render_widget(block.clone(), tui::layout::Rect {
                 x: other[2].x + 2,
@@ -250,33 +208,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             });
         })?;
 
-        let elapsed = time::SystemTime::now().duration_since(last)?;
-        let timeout: usize;
-
-        if game.tick_time >= (offset_tick + elapsed.as_millis() as usize) {
-            timeout = game.tick_time - (offset_tick + elapsed.as_millis() as usize);
-        } else {
-            timeout = 0;
-        }
-
-        if game.is_over() {
-            break;
-        }
-
-        match events.receiver.recv_timeout(Duration::from_millis(timeout as u64)) {
+        match events.receiver.recv_timeout(Duration::from_millis(
+                game.get_timeout() as u64)) {
             Ok(key) => {
                 match key {
                     Key::Char('q') => break,
                     Key::Left => game.move_left(),
                     Key::Right => game.move_right(),
-                    Key::Down => {
-                        if game.can_move_down() {
-                            last = time::SystemTime::now();
-                            sticky_timeout = INITIAL_TICK_TIME_MS;
-                            offset_tick = 0;
-                            game.move_down();
-                        }
-                    },
+                    Key::Down => game.move_down(),
                     Key::Char('a') => game.safe_rotate_counter_clockwise(),
                     Key::Char('d') => game.safe_rotate_clockwise(),
                     Key::Char('s') => game.use_spare(),
@@ -286,21 +225,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 if game.can_move_down() {
-                    sticky_timeout = INITIAL_TICK_TIME_MS;
-                    offset_tick = 0;
                     game.move_down();
+                } else if game.should_finish_turn() {
+                    game.finish_turn();
                 } else {
-                    if sticky_timeout <= game.tick_time {
-                        game.finish_turn();
-                    } else {
-                        sticky_timeout -= game.tick_time;
-
-                        if sticky_timeout < game.tick_time {
-                            offset_tick = game.tick_time - sticky_timeout;
-                        }
-                    }
+                    game.advance_stuck();
                 }
-                last = time::SystemTime::now();
             },
             _ => eprintln!("WTF")
         }

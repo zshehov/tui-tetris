@@ -52,6 +52,13 @@ impl Matrix {
 
         right[0..self.col_count].copy_from_slice(&left[from_idx..(from_idx + self.col_count)]);
     }
+
+    pub fn new(col_count: usize, row_count: usize) -> Self {
+        Matrix {
+            col_count,
+            backing: vec![false; col_count * row_count],
+        }
+    }
 }
 
 impl Clone for Matrix {

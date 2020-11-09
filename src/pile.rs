@@ -1,5 +1,9 @@
 use crate::matrix::Matrix;
 use std::collections::HashSet;
+
+// TODO: making matrix iterable by lines will remove this
+use crate::tetris;
+
 pub struct Pile {
     // for easier collision detection
     pub field: Matrix,
@@ -52,10 +56,11 @@ impl Pile {
     }
 
     pub fn cleanup_full_lines(&mut self) -> usize {
-        let mut current : usize = super::BOTTOM_THRESHOLD as usize - 1;
+        let mut current : usize = tetris::BOTTOM_THRESHOLD as usize - 1;
         let mut cleaned_up = 0;
 
-        for line in (1..super::BOTTOM_THRESHOLD as usize).rev() {
+        //TODO: Make matrix iterable line by line
+        for line in (1..tetris::BOTTOM_THRESHOLD as usize).rev() {
             if self.is_complete_line_with(line, &HashSet::new()) {
                 self.remove_line(line);
                 cleaned_up += 1;
@@ -79,6 +84,13 @@ impl Pile {
         for (idx, value) in self.field.get_row_mut(line).iter_mut().enumerate() {
             *value = false;
             self.set.remove(&(line, idx));
+        }
+    }
+
+    pub fn new(col_count: usize, row_count: usize) -> Self {
+        Pile {
+            field: Matrix::new(col_count, row_count),
+            set: HashSet::new()
         }
     }
 }
