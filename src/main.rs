@@ -103,7 +103,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Tetris::new();
 
     loop {
-        game.project();
         // render tui
         terminal.draw(|f| {
             let screen = Layout::default()

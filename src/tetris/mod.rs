@@ -29,7 +29,7 @@ impl Tetris {
         self.finish_turn();
     }
 
-    pub fn project(&mut self) {
+    fn project(&mut self) {
         self.projected_piece = self.current_piece.clone();
         while !self.touches_on_bottom(&self.projected_piece) {
             self.projected_piece.move_down_unsafe();
@@ -110,12 +110,14 @@ impl Tetris {
     pub fn move_left(&mut self) {
         if !self.collides(&self.current_piece, (-1, 0)) {
             self.current_piece.move_left_unsafe();
+            self.project();
         }
     }
 
     pub fn move_right(&mut self) {
         if !self.collides(&self.current_piece, (1, 0)) {
             self.current_piece.move_right_unsafe();
+            self.project();
         }
     }
 
@@ -176,6 +178,7 @@ impl Tetris {
             temp.move_right_unsafe();
             self.current_piece = temp;
         }
+        self.project();
     }
 
     pub fn get_tick_speed(&self) -> usize {
