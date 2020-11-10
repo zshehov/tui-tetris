@@ -1,5 +1,6 @@
 pub struct Matrix { 
     pub col_count: usize,
+    pub row_count: usize,
     pub backing: Vec<bool>
 }
 
@@ -56,14 +57,27 @@ impl Matrix {
     pub fn new(col_count: usize, row_count: usize) -> Self {
         Matrix {
             col_count,
+            row_count,
             backing: vec![false; col_count * row_count],
+        }
+    }
+
+    pub fn from_vec(col_count: usize, backing: Vec<bool>) -> Self {
+        Matrix {
+            col_count,
+            row_count: backing.len() / col_count,
+            backing
         }
     }
 }
 
 impl Clone for Matrix {
     fn clone(&self) -> Self {
-        Matrix {col_count: self.col_count, backing: self.backing.clone()}
+        Matrix {
+            col_count: self.col_count,
+            row_count: self.row_count,
+            backing: self.backing.clone()
+        }
     }
 }
 

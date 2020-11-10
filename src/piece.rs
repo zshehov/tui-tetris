@@ -91,26 +91,13 @@ impl Piece {
 
     fn get_piece_template(piece_type: &PieceType) -> Matrix {
         match piece_type {
-            PieceType::Square => Matrix {col_count: 2,
-                                         backing: SQUARE.to_vec()},
-
-            PieceType::L => Matrix {col_count: 3,
-                                    backing: L.to_vec()},
-
-            PieceType::ReverseL => Matrix {col_count: 3,
-                                           backing: REVERSE_L.to_vec()},
-
-            PieceType::Straight => Matrix {col_count: 4,
-                                           backing: STRAIGHT.to_vec()},
-
-            PieceType::T => Matrix {col_count: 3,
-                                    backing: T.to_vec()},
-
-            PieceType::Worm => Matrix {col_count: 3,
-                                       backing: WORM.to_vec()},
-
-            PieceType::ReverseWorm => Matrix {col_count: 3,
-                                              backing: REVERSE_WORM.to_vec()},
+            PieceType::Square => Matrix::from_vec(2, SQUARE.to_vec()),
+            PieceType::L => Matrix::from_vec(3, L.to_vec()),
+            PieceType::ReverseL => Matrix::from_vec(3, REVERSE_L.to_vec()),
+            PieceType::Straight => Matrix::from_vec(4, STRAIGHT.to_vec()),
+            PieceType::T => Matrix::from_vec(3, T.to_vec()),
+            PieceType::Worm => Matrix::from_vec(3, WORM.to_vec()),
+            PieceType::ReverseWorm => Matrix::from_vec(3, REVERSE_WORM.to_vec()),
         }
     }
 

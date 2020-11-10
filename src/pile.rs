@@ -2,10 +2,6 @@ use crate::piece;
 use crate::matrix::Matrix;
 use std::collections::{HashMap, HashSet};
 
-// TODO: making matrix iterable by lines will remove this
-use crate::tetris;
-
-
 pub struct Pile {
     // for easier collision detection
     pub field: Matrix,
@@ -60,11 +56,10 @@ impl Pile {
     }
 
     pub fn cleanup_full_lines(&mut self) -> usize {
-        let mut current : usize = tetris::BOTTOM_THRESHOLD as usize - 1;
+        let mut current : usize = self.field.row_count- 1;
         let mut cleaned_up = 0;
 
-        //TODO: Make matrix iterable line by line
-        for line in (1..tetris::BOTTOM_THRESHOLD as usize).rev() {
+        for line in (1..self.field.row_count).rev() {
             if self.is_complete_line_with(line, &HashSet::new()) {
                 self.remove_line(line);
                 cleaned_up += 1;
