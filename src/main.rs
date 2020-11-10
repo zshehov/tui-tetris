@@ -208,6 +208,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             });
         })?;
 
+        if game.is_over() {
+            break;
+        }
         match events.receiver.recv_timeout(Duration::from_millis(
                 game.get_timeout() as u64)) {
             Ok(key) => {
