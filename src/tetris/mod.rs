@@ -159,7 +159,7 @@ impl Tetris {
         }
         // move 1 to the right from the initial position
         if !self.collides(&piece, (1, 0)) {
-            piece.move_left_unsafe();
+            piece.move_right_unsafe();
             return true;
         }
         // move 2 to the left from the initial position
