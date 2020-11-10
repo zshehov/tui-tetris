@@ -35,10 +35,11 @@ impl TimeManager {
         const QUICKENING_COEF: usize = 20;
         let tick_quickening = QUICKENING_COEF * cleaned_up;
 
-        // can't go any faster than 0
-        if self.tick_time >= tick_quickening {
+        if self.tick_time >= tick_quickening{
             self.tick_time -= tick_quickening;
         }
+        // cap speed at 20ms per tick
+        self.tick_time = std::cmp::max(20, self.tick_time);
     }
 
     // for when the piece is layed down it's better if we wait for a timeout
