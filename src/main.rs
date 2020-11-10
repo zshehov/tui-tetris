@@ -43,6 +43,7 @@ pub mod matrix;
 pub mod piece;
 pub mod pile;
 pub mod tetris;
+pub mod config;
 
 use piece::Piece;
 use tetris::Tetris;
@@ -64,9 +65,9 @@ fn render_playing_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
                 <termion::raw::RawTerminal<std::io::Stdout>>>>) {
     piece.get_positions().iter().map(|(i, j)| {
         tui::layout::Rect{
-            x: (*j * tetris::BLOCK_WIDTH) as u16,
-            y: (*i * tetris::BLOCK_HEIGHT) as u16,
-            width: tetris::BLOCK_WIDTH as u16, height: tetris::BLOCK_HEIGHT as u16}
+            x: (*j * config::BLOCK_WIDTH) as u16,
+            y: (*i * config::BLOCK_HEIGHT) as u16,
+            width: config::BLOCK_WIDTH as u16, height: config::BLOCK_HEIGHT as u16}
     }).for_each(|rect| {
         frame.render_widget(block.clone()
              .style(Style::default()
@@ -80,7 +81,7 @@ fn render_utility_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
                 <termion::raw::RawTerminal<std::io::Stdout>>>>) {
     piece.get_positions().iter().map(|(i, j)| {
         tui::layout::Rect{
-            x: tetris::END_PLAYING_SCREEN_X as u16+ 2 + (*j * 6) as u16,
+            x: config::END_PLAYING_SCREEN_X as u16+ 2 + (*j * 6) as u16,
             y: (*i * 3) as u16,
             width: 6 as u16, height: 3 as u16}
     }).for_each(|rect| {
@@ -108,7 +109,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let screen = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Length(
-                        (tetris::RIGHT_THRESHOLD * tetris::BLOCK_WIDTH) as u16),
+                        (config::RIGHT_THRESHOLD * config::BLOCK_WIDTH) as u16),
                               Constraint::Length(30),
                               Constraint::Min(0)].as_ref())
                 .split(f.size());
@@ -163,9 +164,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     color = get_tui_color(piece_color.clone());// change this to Color::DarkGrey if you don't like colored pile
                 }
                 (tui::layout::Rect{
-                    x: *j as u16 * tetris::BLOCK_WIDTH as u16,
-                    y: *i as u16 * tetris::BLOCK_HEIGHT as u16,
-                    width: tetris::BLOCK_WIDTH as u16, height: tetris::BLOCK_HEIGHT as u16},
+                    x: *j as u16 * config::BLOCK_WIDTH as u16,
+                    y: *i as u16 * config::BLOCK_HEIGHT as u16,
+                    width: config::BLOCK_WIDTH as u16, height: config::BLOCK_HEIGHT as u16},
                     color)
             }).for_each(|(rect, color)| {
                 f.render_widget(block.clone().style(Style::default().bg(color)), rect);

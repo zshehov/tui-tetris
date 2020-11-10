@@ -1,20 +1,11 @@
 use crate::pile::Pile;
 use crate::piece::Piece;
+use crate::config;
 
 use delegate::delegate;
 
 mod time_manager;
 use time_manager::TimeManager;
-
-pub const END_PLAYING_SCREEN_X : usize = 74;
-pub const END_SCREEN_Y : usize = 54;
-
-pub const BLOCK_HEIGHT : usize = 2;
-pub const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
-pub const LEFT_THRESHOLD : usize = 0;
-pub const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
-pub const BOTTOM_THRESHOLD : usize = END_SCREEN_Y / BLOCK_HEIGHT;
-const INITIAL_TICK_TIME_MS : usize = 1000;
 
 pub struct Tetris {
     pub current_piece: Piece,
@@ -51,7 +42,7 @@ impl Tetris {
 
     fn put_in_starting_position(&mut self) {
         self.current_piece.place_at(
-            (LEFT_THRESHOLD + RIGHT_THRESHOLD) as i16 / 2 - 2, 0);
+            (config::LEFT_THRESHOLD + config::RIGHT_THRESHOLD) as i16 / 2 - 2, 0);
     }
     
     pub fn use_spare (&mut self) {
@@ -74,7 +65,7 @@ impl Tetris {
         self.put_in_starting_position();
 
         self.spare_used = false;
-        self.score += cleaned_up * RIGHT_THRESHOLD;
+        self.score += cleaned_up * config::RIGHT_THRESHOLD;
 
         if cleaned_up > 1 {
             // for combos
@@ -102,8 +93,8 @@ impl Tetris {
                 x => x
             } as usize;
 
-            if real_j >= RIGHT_THRESHOLD
-                || real_i >= BOTTOM_THRESHOLD
+            if real_j >= config::RIGHT_THRESHOLD
+                || real_i >= config::BOTTOM_THRESHOLD
                 || self.pile.contains((real_i, real_j)) {
                 return true;
             }
@@ -201,7 +192,7 @@ impl Tetris {
 
     pub fn new() -> Self {
         let mut tetris = Tetris {
-            pile: Pile::new(RIGHT_THRESHOLD, BOTTOM_THRESHOLD),
+            pile: Pile::new(config::RIGHT_THRESHOLD, config::BOTTOM_THRESHOLD),
             current_piece: Piece::new_random_piece_at(0, 0),
             next_piece: Piece::new_random_piece_at(0, 1),
             spare_piece: Piece::new_random_piece_at(0, 7),

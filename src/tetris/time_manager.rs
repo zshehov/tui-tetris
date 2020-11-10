@@ -1,5 +1,6 @@
 use std::time::Duration;
 use std::time;
+use crate::config;
 
 pub struct TimeManager {
     pub tick_time: usize,
@@ -11,7 +12,7 @@ pub struct TimeManager {
 impl TimeManager {
     pub fn tick(&mut self) {
         self.last = time::SystemTime::now();
-        self.sticky_timeout = super::INITIAL_TICK_TIME_MS;
+        self.sticky_timeout = config::INITIAL_TICK_TIME_MS;
         self.offset_tick = 0;
     }
 
@@ -55,7 +56,7 @@ impl TimeManager {
     }
 
     pub fn new() -> Self {
-        TimeManager {tick_time: super::INITIAL_TICK_TIME_MS, last: time::SystemTime::now(),
-                     sticky_timeout: super::INITIAL_TICK_TIME_MS, offset_tick: 0}
+        TimeManager {tick_time: config::INITIAL_TICK_TIME_MS, last: time::SystemTime::now(),
+                     sticky_timeout: config::INITIAL_TICK_TIME_MS, offset_tick: 0}
     }
 }
