@@ -1,4 +1,5 @@
 use crate::pile::Pile;
+use crate::piece;
 use crate::piece::Piece;
 
 use delegate::delegate;
@@ -56,7 +57,8 @@ impl Tetris {
     }
 
     pub fn finish_turn (&mut self) {
-        self.pile.extend(self.current_piece.get_positions().iter().cloned());
+        self.pile.add(self.current_piece.get_positions().iter().cloned(),
+                      piece::get_piece_color(&self.current_piece.piece_type));
         let cleaned_up = self.pile.cleanup_full_lines();
 
         self.current_piece.swap_figures(&mut self.next_piece);

@@ -1,14 +1,16 @@
+use crate::piece;
 use crate::matrix::Matrix;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 // TODO: making matrix iterable by lines will remove this
 use crate::tetris;
+
 
 pub struct Pile {
     // for easier collision detection
     pub field: Matrix,
     // for easier block rendering
-    pub set: HashSet<(usize, usize)>
+    pub map: HashMap<(usize, usize), piece::PieceColor>
 }
 
 impl Pile {
@@ -16,10 +18,11 @@ impl Pile {
         self.field[coords]
     }
 
-    pub fn extend<I: IntoIterator<Item = (usize, usize)>>(&mut self, iter: I) {
+    pub fn add<I: IntoIterator<Item = (usize, usize)>>(&mut self, iter: I,
+                                                       color: piece::PieceColor) {
         for coords in iter {
             self.field[coords] = true;
-            self.set.insert(coords);
+            self.map.insert(coords, color.clone());
         }
     }
 
@@ -50,7 +53,9 @@ impl Pile {
 
         for (idx, value) in self.field.get_row(to).iter().enumerate() {
             if *value {
-                self.set.insert((to, idx));
+                self.map.insert((to, idx),
+                    // just a random color for the unwrap fail as it can never happen
+                    self.map.get(&(from, idx)).cloned().unwrap_or(piece::PieceColor::Green));
             }
         }
     }
@@ -83,14 +88,14 @@ impl Pile {
     fn remove_line(&mut self, line: usize) {
         for (idx, value) in self.field.get_row_mut(line).iter_mut().enumerate() {
             *value = false;
-            self.set.remove(&(line, idx));
+            self.map.remove(&(line, idx));
         }
     }
 
     pub fn new(col_count: usize, row_count: usize) -> Self {
         Pile {
             field: Matrix::new(col_count, row_count),
-            set: HashSet::new()
+            map: HashMap::new()
         }
     }
 }

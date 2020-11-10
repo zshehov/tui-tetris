@@ -47,15 +47,15 @@ pub mod tetris;
 use piece::Piece;
 use tetris::Tetris;
 
-fn get_color_for_figure(piece_type: &piece::PieceType) -> Color {
-    match piece_type {
-        piece::PieceType::Square => Color::Red,
-        piece::PieceType::L => Color::Green,
-        piece::PieceType::Straight => Color::LightBlue,
-        piece::PieceType::ReverseL => Color::Blue,
-        piece::PieceType::T => Color::LightYellow,
-        piece::PieceType::Worm => Color::Yellow,
-        piece::PieceType::ReverseWorm => Color::Magenta,
+fn get_tui_color(piece_color: piece::PieceColor) -> Color {
+    match piece_color {
+        piece::PieceColor::Red => Color::Red,
+        piece::PieceColor::Green => Color::Green,
+        piece::PieceColor::LightBlue => Color::LightBlue,
+        piece::PieceColor::Blue => Color::Blue,
+        piece::PieceColor::LightYellow => Color::LightYellow,
+        piece::PieceColor::Yellow => Color::Yellow,
+        piece::PieceColor::Magenta => Color::Magenta,
     }
 }
 
@@ -71,7 +71,7 @@ fn render_playing_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
         frame.render_widget(block.clone()
              .style(Style::default()
                     .bg(color_hint.unwrap_or(
-                            get_color_for_figure(&piece.piece_type)))), rect);
+                            get_tui_color(piece::get_piece_color(&piece.piece_type))))), rect);
     });
 }
 
@@ -87,7 +87,7 @@ fn render_utility_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
         frame.render_widget(block.clone()
              .style(Style::default()
                     .bg(color_hint.unwrap_or(
-                            get_color_for_figure(&piece.piece_type)))), rect);
+                            get_tui_color(piece::get_piece_color(&piece.piece_type))))), rect);
     });
 }
 
@@ -161,12 +161,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             let potentionally_completed_lines = game.pile.get_complete_lines_with(
                 &projected.get_positions());
 
-            game.pile.set.iter().map(|(i, j)| {
+            game.pile.map.iter().map(|((i, j), piece_color)| {
                 let color : Color;
                 if potentionally_completed_lines.contains(i) {
                     color = Color::Rgb(200, 200, 200);
                 } else {
-                    color = Color::DarkGray;
+                    color = get_tui_color(piece_color.clone());// change this to Color::DarkGrey if you don't like colored pile
                 }
                 (tui::layout::Rect{
                     x: *j as u16 * tetris::BLOCK_WIDTH as u16,

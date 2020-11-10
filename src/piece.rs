@@ -14,6 +14,29 @@ pub enum PieceType {
     ReverseWorm
 }
 
+#[derive(Clone)]
+pub enum PieceColor {
+    Red,
+    Blue,
+    LightBlue,
+    Yellow,
+    LightYellow,
+    Green,
+    Magenta,
+}
+
+pub fn get_piece_color(piece_type: &PieceType) -> PieceColor {
+    match piece_type {
+        PieceType::Square => PieceColor::Red,
+        PieceType::L => PieceColor::Green,
+        PieceType::Straight => PieceColor::LightBlue,
+        PieceType::ReverseL => PieceColor::Blue,
+        PieceType::T => PieceColor::LightYellow,
+        PieceType::Worm => PieceColor::Yellow,
+        PieceType::ReverseWorm => PieceColor::Magenta,
+    }
+}
+
 impl rand::distributions::Distribution<PieceType> for rand::distributions::Standard {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> PieceType {
         match rng.gen_range(0, 7) {
