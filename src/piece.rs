@@ -224,28 +224,27 @@ impl Piece {
 static SQUARE       : [bool;  4] = [true, true,
                                     true, true];
 
-static L            : [bool;  9] = [false, true, false, 
-                                    false, true, false, 
-                                    false, true, true];
-
-static REVERSE_L    : [bool;  9] = [false, true, false, 
-                                    false, true, false, 
-                                    true,  true, false];
-
-static STRAIGHT     : [bool; 16] = [false, true, false, false,
-                                    false, true, false, false, 
-                                    false, true, false, false, 
-                                    false, true, false, false];
-
-static T            : [bool;  9] = [false, true,  false, 
+static L            : [bool;  9] = [false, false, true,
                                     true,  true,  true,
                                     false, false, false];
 
-static WORM         : [bool;  9] = [true,  true,  false, 
+static REVERSE_L    : [bool;  9] = [true,  false, false,
+                                    true,  true,  true,
+                                    false, false, false];
+
+static STRAIGHT     : [bool; 16] = [false, false, false, false,
+                                    true, true, true, true,
+                                    false, false, false, false,
+                                    false, false, false, false];
+
+static T            : [bool;  9] = [false, true,  false,
+                                    true,  true,  true,
+                                    false, false, false];
+
+static WORM         : [bool;  9] = [true,  true,  false,
                                     false, true,  true,
                                     false, false, false];
 
-static REVERSE_WORM : [bool;  9] = [false, true,  true, 
+static REVERSE_WORM : [bool;  9] = [false, true,  true,
                                     true,  true,  false,
                                     false, false, false];
-

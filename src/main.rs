@@ -99,7 +99,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let events = Events::new();
-
     let mut game = Tetris::new();
 
     loop {

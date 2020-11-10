@@ -18,11 +18,10 @@ impl Pile {
         self.field[coords]
     }
 
-    pub fn add<I: IntoIterator<Item = (usize, usize)>>(&mut self, iter: I,
-                                                       color: piece::PieceColor) {
-        for coords in iter {
+    pub fn add(&mut self, piece: &piece::Piece) {
+        for coords in piece.get_positions().iter().cloned() {
             self.field[coords] = true;
-            self.map.insert(coords, color.clone());
+            self.map.insert(coords, piece::get_piece_color(&piece.piece_type).clone());
         }
     }
 

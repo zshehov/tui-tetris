@@ -1,5 +1,4 @@
 use crate::pile::Pile;
-use crate::piece;
 use crate::piece::Piece;
 
 use delegate::delegate;
@@ -57,8 +56,7 @@ impl Tetris {
     }
 
     pub fn finish_turn (&mut self) {
-        self.pile.add(self.current_piece.get_positions().iter().cloned(),
-                      piece::get_piece_color(&self.current_piece.piece_type));
+        self.pile.add(&self.current_piece);
         let cleaned_up = self.pile.cleanup_full_lines();
 
         self.current_piece.swap_figures(&mut self.next_piece);
@@ -167,16 +165,17 @@ impl Tetris {
     }
 
     pub fn new() -> Self {
-        Tetris {
+        let mut tetris = Tetris {
             pile: Pile::new(RIGHT_THRESHOLD, BOTTOM_THRESHOLD),
-            current_piece: Piece::new_random_piece_at(
-                           ((LEFT_THRESHOLD + RIGHT_THRESHOLD) / 2 - 2) as i16, 0),
+            current_piece: Piece::new_random_piece_at(0, 0),
             next_piece: Piece::new_random_piece_at(0, 1),
             spare_piece: Piece::new_random_piece_at(0, 7),
             spare_used: false,
             score: 0,
             last_combo: 0,
             time_manager: TimeManager::new()
-        }
+        };
+        tetris.put_in_starting_position();
+        tetris
     }
 }
