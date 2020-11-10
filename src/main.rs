@@ -102,12 +102,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Tetris::new();
 
     loop {
-        let mut projected = game.current_piece.clone();
-
-        while !projected.touches_on_bottom(&game.pile) {
-            projected.move_down_unsafe();
-        }
-    
+        game.project();
         // render tui
         terminal.draw(|f| {
             let screen = Layout::default()
@@ -153,12 +148,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             render_utility_piece(&game.spare_piece, &block.clone(), None, f);
             render_utility_piece(&game.next_piece, &block.clone(), None, f);
-            render_playing_piece(&projected,
+            render_playing_piece(&game.projected_piece,
                          &block.clone(), Some(Color::Gray), f);
             render_playing_piece(&game.current_piece, &block, None, f);
 
             let potentionally_completed_lines = game.pile.get_complete_lines_with(
-                &projected.get_positions());
+                &game.projected_piece.get_positions());
 
             game.pile.map.iter().map(|((i, j), piece_color)| {
                 let color : Color;

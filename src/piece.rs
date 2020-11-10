@@ -1,6 +1,4 @@
 use crate::matrix::Matrix;
-use crate::pile::Pile;
-use crate::tetris;
 use rand::Rng;
 
 #[derive(Clone)]
@@ -150,7 +148,7 @@ impl Piece {
         return result;
     }
     // positions from this may include off-field coordinates
-    fn get_positions_unsafe(&self) -> [(i16, i16); 4] {
+    pub fn get_positions_unsafe(&self) -> [(i16, i16); 4] {
         let mut result : [(i16, i16); 4] = [(0, 0); 4];
         let mut x = 0;
 
@@ -164,32 +162,6 @@ impl Piece {
         }
 
         return result;
-    }
-
-    pub fn touches_on_bottom (&self, pile: &Pile) -> bool {
-        self.collides((0, 1), pile)
-    }
-
-    pub fn collides (&self, (offset_x, offset_y): (i16, i16), pile: &Pile) -> bool {
-        for (i, j) in self.get_positions_unsafe().iter() {
-            let real_i = match *i + offset_y {
-                x if x < 0 => return true,
-                x => x
-            } as usize;
-
-            let real_j = match *j + offset_x {
-                x if x < 0 => return true,
-                x => x
-            } as usize;
-
-            if real_j >= tetris::RIGHT_THRESHOLD
-                || real_i >= tetris::BOTTOM_THRESHOLD
-                || pile.contains((real_i, real_j)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // this is for when a check has been done prior to this call

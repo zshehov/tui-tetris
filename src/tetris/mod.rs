@@ -20,6 +20,7 @@ pub struct Tetris {
     pub current_piece: Piece,
     pub next_piece: Piece,
     pub spare_piece: Piece,
+    pub projected_piece: Piece,
     pub pile: Pile,
 
     pub spare_used: bool,
@@ -31,14 +32,21 @@ pub struct Tetris {
 
 impl Tetris {
     pub fn drop_to_bottom (&mut self) {
-        while !self.current_piece.touches_on_bottom(&self.pile) {
+        while self.can_move_down() {
             self.current_piece.move_down_unsafe();
         }
         self.finish_turn();
     }
 
+    pub fn project(&mut self) {
+        self.projected_piece = self.current_piece.clone();
+        while !self.touches_on_bottom(&self.projected_piece) {
+            self.projected_piece.move_down_unsafe();
+        }
+    }
+
     pub fn can_move_down(&self) -> bool {
-        return !self.current_piece.touches_on_bottom(&self.pile);
+        !self.touches_on_bottom(&self.current_piece)
     }
 
     fn put_in_starting_position(&mut self) {
@@ -79,31 +87,57 @@ impl Tetris {
     }
 
     pub fn is_over (&self) -> bool {
-        self.current_piece.collides((0,0), &self.pile)
+        self.collides(&self.current_piece, (0,0))
+    }
+
+    fn collides(&self, piece: &Piece, (offset_x, offset_y): (i16, i16)) -> bool {
+        for (i, j) in piece.get_positions_unsafe().iter() {
+            let real_i = match *i + offset_y {
+                x if x < 0 => return true,
+                x => x
+            } as usize;
+
+            let real_j = match *j + offset_x {
+                x if x < 0 => return true,
+                x => x
+            } as usize;
+
+            if real_j >= RIGHT_THRESHOLD
+                || real_i >= BOTTOM_THRESHOLD
+                || self.pile.contains((real_i, real_j)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    fn touches_on_bottom(&self, piece: &Piece) -> bool {
+        self.collides(piece, (0, 1))
     }
 
     pub fn move_left(&mut self) {
-        if !self.current_piece.collides((-1, 0), &self.pile) {
+        if !self.collides(&self.current_piece, (-1, 0)) {
             self.current_piece.move_left_unsafe();
         }
     }
 
     pub fn move_right(&mut self) {
-        if !self.current_piece.collides((1, 0), &self.pile) {
+        if !self.collides(&self.current_piece, (1, 0)) {
             self.current_piece.move_right_unsafe();
         }
     }
 
     // each move down is interpreted as a tick of the game
     pub fn move_down (&mut self) {
-        if !self.current_piece.touches_on_bottom(&self.pile) {
+        if !self.touches_on_bottom(&self.current_piece) {
             self.time_manager.tick();
             self.current_piece.move_down_unsafe();
         }
     }
 
     pub fn finishing_move_down (&mut self) {
-        if self.current_piece.touches_on_bottom(&self.pile) {
+        if self.touches_on_bottom(&self.current_piece) {
             self.finish_turn();
         } else {
             self.current_piece.move_down_unsafe();
@@ -126,27 +160,27 @@ impl Tetris {
             temp.rotate_counter_clockwise();
         }
 
-        if !temp.collides((0, 0), &self.pile) {
+        if !self.collides(&temp, (0, 0)) {
             self.current_piece = temp;
         } else
         // move 1 to the left from the initial position
-        if !temp.collides((-1, 0), &self.pile) {
+        if !self.collides(&temp, (-1, 0)) {
             temp.move_left_unsafe();
             self.current_piece = temp;
         } else
         // move 1 to the right from the initial position
-        if !temp.collides((1, 0), &self.pile) {
+        if !self.collides(&temp, (1, 0)) {
             temp.move_right_unsafe();
             self.current_piece = temp;
         } else
         // move 2 to the left from the initial position
-        if !temp.collides((-2, 0), &self.pile) {
+        if !self.collides(&temp, (-2, 0)) {
             temp.move_left_unsafe();
             temp.move_left_unsafe();
             self.current_piece = temp;
         } else
         // move 2 to the right from the initial position
-        if !temp.collides((2, 0), &self.pile) {
+        if !self.collides(&temp, (22, 0)) {
             temp.move_right_unsafe();
             temp.move_right_unsafe();
             self.current_piece = temp;
@@ -171,6 +205,7 @@ impl Tetris {
             current_piece: Piece::new_random_piece_at(0, 0),
             next_piece: Piece::new_random_piece_at(0, 1),
             spare_piece: Piece::new_random_piece_at(0, 7),
+            projected_piece: Piece::new_random_piece_at(0, 0),
             spare_used: false,
             score: 0,
             last_combo: 0,
