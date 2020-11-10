@@ -9,7 +9,7 @@ use time_manager::TimeManager;
 pub const END_PLAYING_SCREEN_X : usize = 74;
 pub const END_SCREEN_Y : usize = 54;
 
-pub const BLOCK_HEIGHT : usize = 3;
+pub const BLOCK_HEIGHT : usize = 2;
 pub const BLOCK_WIDTH : usize = BLOCK_HEIGHT * 2;
 pub const LEFT_THRESHOLD : usize = 0;
 pub const RIGHT_THRESHOLD : usize = END_PLAYING_SCREEN_X / BLOCK_WIDTH;
@@ -51,6 +51,7 @@ impl Tetris {
             self.spare_used = true;
 
             self.current_piece.swap_figures(&mut self.spare_piece);
+            self.spare_piece.refresh();
             self.put_in_starting_position();
         }
     }

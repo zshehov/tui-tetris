@@ -89,7 +89,7 @@ impl Piece {
         self.template = new_template;
     }
 
-    fn get_piece_template(piece_type: PieceType) -> Matrix {
+    fn get_piece_template(piece_type: &PieceType) -> Matrix {
         match piece_type {
             PieceType::Square => Matrix {col_count: 2,
                                          backing: SQUARE.to_vec()},
@@ -119,16 +119,16 @@ impl Piece {
     }
 
     pub fn new_random_piece_at(anchor_x: i16, anchor_y: i16) -> Self {
-        let piece_type: PieceType = Piece::get_random_piece_type();
+        let piece_type: PieceType = Self::get_random_piece_type();
 
         Piece {anchor_x, anchor_y,
-               template: Piece::get_piece_template(piece_type.clone()),
+               template: Self::get_piece_template(&piece_type),
                piece_type}
     }
 
     pub fn randomize(&mut self) {
-        let piece_type: PieceType = Piece::get_random_piece_type();
-        self.template = Piece::get_piece_template(piece_type.clone());
+        let piece_type: PieceType = Self::get_random_piece_type();
+        self.template = Self::get_piece_template(&piece_type);
         self.piece_type = piece_type;
     }
 
@@ -138,6 +138,11 @@ impl Piece {
 
         std::mem::swap(&mut self.piece_type,
                        &mut other.piece_type);
+    }
+
+    // returns the piece to its initial orientation
+    pub fn refresh(&mut self) {
+        self.template = Self::get_piece_template(&self.piece_type);
     }
 
     pub fn get_positions(&self) -> [(usize, usize); 4] {
