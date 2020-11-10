@@ -224,7 +224,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 if game.can_move_down() {
                     game.move_down();
                 } else if game.should_finish_turn() {
-                    game.finish_turn();
+                    if game.finish_turn() {
+                        break;
+                    }
                 } else {
                     game.advance_stuck();
                 }

@@ -55,7 +55,11 @@ impl Tetris {
         }
     }
 
-    pub fn finish_turn (&mut self) {
+    pub fn finish_turn (&mut self) -> bool {
+        if self.collides(&self.current_piece, (0, 0)) {
+            return true;
+        }
+
         self.pile.add(&self.current_piece);
         let cleaned_up = self.pile.cleanup_full_lines();
 
@@ -63,6 +67,11 @@ impl Tetris {
         self.next_piece.randomize();
 
         self.put_in_starting_position();
+        // try fuzzy fitting when the piece just appears
+        let mut temp = self.current_piece.clone();
+        if self.try_fuzzy_fit(&mut temp) {
+            self.current_piece = temp;
+        }
 
         self.spare_used = false;
         self.score += cleaned_up * config::RIGHT_THRESHOLD;
@@ -75,6 +84,8 @@ impl Tetris {
 
         self.time_manager.update_tick_speed(cleaned_up);
         self.time_manager.tick();
+        self.project();
+        return false;
     }
 
     pub fn is_over (&self) -> bool {
@@ -129,20 +140,41 @@ impl Tetris {
         }
     }
 
-    pub fn finishing_move_down (&mut self) {
-        if self.touches_on_bottom(&self.current_piece) {
-            self.finish_turn();
-        } else {
-            self.current_piece.move_down_unsafe();
-        }
-    }
-
     pub fn safe_rotate_clockwise(&mut self) {
         self.safe_rotate_internal(true);
     }
 
     pub fn safe_rotate_counter_clockwise(&mut self) {
         self.safe_rotate_internal(false);
+    }
+
+    fn try_fuzzy_fit(&self, piece: &mut Piece) -> bool {
+        if !self.collides(&piece, (0, 0)) {
+            return true;
+        }
+        // move 1 to the left from the initial position
+        if !self.collides(&piece, (-1, 0)) {
+            piece.move_left_unsafe();
+            return true;
+        }
+        // move 1 to the right from the initial position
+        if !self.collides(&piece, (1, 0)) {
+            piece.move_left_unsafe();
+            return true;
+        }
+        // move 2 to the left from the initial position
+        if !self.collides(&piece, (-2, 0)) {
+            piece.move_left_unsafe();
+            piece.move_left_unsafe();
+            return true;
+        }
+        // move 2 to the right from the initial position
+        if !self.collides(&piece, (2, 0)) {
+            piece.move_right_unsafe();
+            piece.move_right_unsafe();
+            return true;
+        }
+        return false;
     }
 
     fn safe_rotate_internal (&mut self, clockwise: bool) {
@@ -153,32 +185,10 @@ impl Tetris {
             temp.rotate_counter_clockwise();
         }
 
-        if !self.collides(&temp, (0, 0)) {
+        if self.try_fuzzy_fit(&mut temp) {
             self.current_piece = temp;
-        } else
-        // move 1 to the left from the initial position
-        if !self.collides(&temp, (-1, 0)) {
-            temp.move_left_unsafe();
-            self.current_piece = temp;
-        } else
-        // move 1 to the right from the initial position
-        if !self.collides(&temp, (1, 0)) {
-            temp.move_right_unsafe();
-            self.current_piece = temp;
-        } else
-        // move 2 to the left from the initial position
-        if !self.collides(&temp, (-2, 0)) {
-            temp.move_left_unsafe();
-            temp.move_left_unsafe();
-            self.current_piece = temp;
-        } else
-        // move 2 to the right from the initial position
-        if !self.collides(&temp, (22, 0)) {
-            temp.move_right_unsafe();
-            temp.move_right_unsafe();
-            self.current_piece = temp;
+            self.project();
         }
-        self.project();
     }
 
     pub fn get_tick_speed(&self) -> usize {
@@ -206,6 +216,7 @@ impl Tetris {
             time_manager: TimeManager::new()
         };
         tetris.put_in_starting_position();
+        tetris.project();
         tetris
     }
 }
