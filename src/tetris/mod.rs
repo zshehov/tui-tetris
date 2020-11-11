@@ -29,6 +29,7 @@ impl Tetris {
         self.finish_turn();
     }
 
+    // TODO: make a macro that marks methods that should finish with project
     fn project(&mut self) {
         self.projected_piece = self.current_piece.clone();
         while !self.touches_on_bottom(&self.projected_piece) {
@@ -52,6 +53,7 @@ impl Tetris {
             self.current_piece.swap_figures(&mut self.spare_piece);
             self.spare_piece.refresh();
             self.put_in_starting_position();
+            self.project();
         }
     }
 
