@@ -34,13 +34,15 @@ impl TimeManager {
 
     pub fn update_tick_speed(&mut self, cleaned_up: usize) {
         const QUICKENING_COEF: usize = 20;
+        const SPEED_CAP: usize = 20;
         let tick_quickening = QUICKENING_COEF * cleaned_up;
 
-        if self.tick_time >= tick_quickening{
+        if self.tick_time >= tick_quickening + SPEED_CAP {
             self.tick_time -= tick_quickening;
+        } else {
+            // cap speed at 20ms per tick
+            self.tick_time = SPEED_CAP;
         }
-        // cap speed at 20ms per tick
-        self.tick_time = std::cmp::max(20, self.tick_time);
     }
 
     // for when the piece is layed down it's better if we wait for a timeout
