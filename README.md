@@ -9,6 +9,7 @@ d - clockwise rotation
 
 arrows - move piece  
 q - exit game  
+p - pause game
 
 
 Probably some adjustment of the consts will be needed to look good on a given terminal
