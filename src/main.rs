@@ -92,6 +92,36 @@ fn render_utility_piece(piece: &Piece, block: &Block, color_hint: Option<Color>,
     });
 }
 
+fn put_message_on_screen(
+                message: &str,
+                terminal:
+                &mut Terminal<TermionBackend<AlternateScreen<
+                    termion::raw::RawTerminal<std::io::Stdout>>>>) {
+
+    terminal.draw(|frame| {
+        let screen = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(5)
+            .constraints([Constraint::Ratio(1, 3),
+                          Constraint::Ratio(1, 3),
+                          Constraint::Ratio(1, 3)].as_ref())
+            .split(frame.size());
+
+        let screen = Layout::default()
+            .direction(Direction::Horizontal)
+            .margin(5)
+            .constraints([Constraint::Ratio(1, 3),
+                          Constraint::Ratio(1, 3),
+                          Constraint::Ratio(1, 3)].as_ref())
+            .split(screen[1]);
+
+        let paragraph = Paragraph::new(message)
+            .block(Block::default().borders(Borders::ALL))
+            .alignment(Alignment::Center);
+        frame.render_widget(paragraph, screen[1]);
+    }).expect("Failed to display image on screen");
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
 
     let stdout = io::stdout().into_raw_mode()?;
@@ -216,6 +246,23 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Key::Char('a') => game.safe_rotate_counter_clockwise(),
                     Key::Char('d') => game.safe_rotate_clockwise(),
                     Key::Char('s') => game.use_spare(),
+                    Key::Char('p') => {
+                        loop {
+                            put_message_on_screen("Game is paused", &mut terminal);
+                            match events.receiver.recv() {
+                                Ok(key) => {
+                                    match key {
+                                        Key::Char('p') => break,
+                                        // only 'p' can restart the game
+                                        _ => ()
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to read key during pause: {}", e);
+                                }
+                            }
+                        }
+                    }
                     Key::Char(' ') => game.drop_to_bottom(),
                     _ => continue
                 }
@@ -235,29 +282,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    terminal.draw(|f| {
-        let screen = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(5)
-            .constraints([Constraint::Ratio(1, 3),
-                          Constraint::Ratio(1, 3),
-                          Constraint::Ratio(1, 3)].as_ref())
-            .split(f.size());
-
-        let screen = Layout::default()
-            .direction(Direction::Horizontal)
-            .margin(5)
-            .constraints([Constraint::Ratio(1, 3),
-                          Constraint::Ratio(1, 3),
-                          Constraint::Ratio(1, 3)].as_ref())
-            .split(screen[1]);
-
-        let paragraph = Paragraph::new(format!("Your score is {}", game.score))
-            .block(Block::default().borders(Borders::ALL))
-            .alignment(Alignment::Center);
-        f.render_widget(paragraph, screen[1]);
-    })?;
-
+    put_message_on_screen(&format!("Your score is {}", game.score), &mut terminal);
     std::thread::sleep(time::Duration::from_secs(2));
     Ok(())
 }
